@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Livro de Plantões</title>
 <meta name="description" content="Fechamento de plantões e aulas, com histórico do que já recebi e do que falta receber.">
-<meta name="theme-color" content="#0B6B5E">
+<meta name="theme-color" content="#ECF0ED" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1614" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -13,10 +14,10 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+@font-face{font-family:"Archivo";src:url("archivo.woff2") format("woff2");font-weight:100 900;font-stretch:62% 125%;font-style:normal;font-display:swap}
+@font-face{font-family:"DM Mono";src:url("dm-mono-400.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"DM Mono";src:url("dm-mono-500.woff2") format("woff2");font-weight:500;font-style:normal;font-display:swap}
 :root{
   /* Layout: duas abas (Ficha e Histórico). A ficha tem dois modos, Plantão e Professora: um bloco
      por tipo de serviço com régua colorida, recibo em papel à direita. No telefone vira uma
@@ -33,6 +34,8 @@
   --ok:#1D7A46;
   --ok-ink:#FFFFFF;
   --warn:#96580A;
+  --c-rec:#1D7A46;
+  --c-pend:#C97D10;
 
   --t-teal:#0B6B5E;
   --t-violet:#6748BD;
@@ -58,7 +61,7 @@
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --paper:#0E1614; --surface:#151F1C; --field:#0F1816; --ink:#E4ECE8; --muted:#93A39C; --line:#283631;
-    --primary:#3FB8A3; --primary-ink:#06231E; --danger:#F08A7E; --ok:#6FCF97; --ok-ink:#0B2616; --warn:#E0B15A;
+    --primary:#3FB8A3; --primary-ink:#06231E; --danger:#F08A7E; --ok:#6FCF97; --ok-ink:#0B2616; --warn:#E0B15A; --c-rec:#35A083; --c-pend:#C0852A;
     --t-teal:#3FB8A3; --t-violet:#A893EE; --t-amber:#E0B15A; --t-blue:#7FB3D9; --t-berry:#EE8FBE; --t-grey:#8E9C96;
     --receipt:#E8EDE8; --receipt-ink:#16211E; --receipt-muted:#5F6C67; --shadow:rgba(0,0,0,.5);
     --bar:#1B2824; --bar-ink:#E4ECE8; --bar-muted:#93A39C;
@@ -67,7 +70,7 @@
 }
 :root[data-theme="dark"]{
   --paper:#0E1614; --surface:#151F1C; --field:#0F1816; --ink:#E4ECE8; --muted:#93A39C; --line:#283631;
-  --primary:#3FB8A3; --primary-ink:#06231E; --danger:#F08A7E; --ok:#6FCF97; --ok-ink:#0B2616; --warn:#E0B15A;
+  --primary:#3FB8A3; --primary-ink:#06231E; --danger:#F08A7E; --ok:#6FCF97; --ok-ink:#0B2616; --warn:#E0B15A; --c-rec:#35A083; --c-pend:#C0852A;
   --t-teal:#3FB8A3; --t-violet:#A893EE; --t-amber:#E0B15A; --t-blue:#7FB3D9; --t-berry:#EE8FBE; --t-grey:#8E9C96;
   --receipt:#E8EDE8; --receipt-ink:#16211E; --receipt-muted:#5F6C67; --shadow:rgba(0,0,0,.5);
   --bar:#1B2824; --bar-ink:#E4ECE8; --bar-muted:#93A39C;
@@ -85,6 +88,8 @@ body{
 }
 button,input,textarea{font:inherit;color:inherit}
 button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+button,a,input,select,label{touch-action:manipulation}
+html{background:var(--paper)}
 a{color:var(--primary)}
 :focus-visible{outline:2px solid var(--primary);outline-offset:2px}
 input:focus-visible,textarea:focus-visible{outline-offset:0}
@@ -396,6 +401,68 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
 @media (prefers-reduced-motion:no-preference){
   .btn,.link,.add,.step,.rm,.seg button,.tabs a{transition:background-color .12s,color .12s,border-color .12s}
 }
+
+/* ---- v2 ---- */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.reset{display:block;margin:6px auto 0}
+.link.armed{color:var(--danger)}
+.actions .btn{font-size:14.5px;padding:0 10px}
+.notice b{font-weight:700}
+.h-search{display:block;margin-bottom:10px}
+.late{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;color:var(--danger)}
+.h-main .late{margin-top:3px}
+.h-sec{margin:26px 0 8px;font-family:var(--font-display);font-stretch:114%;font-weight:700;font-size:13.5px;letter-spacing:.08em;text-transform:uppercase}
+.h-note.warn{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;max-width:none;color:var(--ink);border:1px dashed var(--warn);border-radius:7px;padding:8px 12px}
+.h-note.warn span{flex:1 1 200px}
+.h-backinfo{margin:8px 0 0;font-size:13px;color:var(--muted)}
+.h-backinfo:empty{display:none}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:20;
+  display:flex;align-items:center;gap:4px;width:max-content;max-width:min(92vw,460px);padding:5px 8px 5px 16px;
+  border-radius:10px;background:var(--bar);color:var(--bar-ink);border:1px solid var(--line);font-size:14.5px;box-shadow:0 8px 24px var(--shadow)}
+.toast span{padding:8px 0}
+.toast .link{color:var(--bar-ink);text-decoration:underline;text-underline-offset:3px}
+
+.tiles{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.tile{min-width:0;padding:13px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.tile.big{grid-column:1 / -1;border-top:3px solid var(--warn)}
+.tile.big.zero{border-top-color:var(--ok)}
+.tile span{display:block;font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.tile strong{display:block;margin-top:3px;font-family:var(--font-display);font-stretch:106%;font-weight:750;font-size:clamp(18px,5.4vw,26px);line-height:1.15;white-space:nowrap}
+.tile.big strong{font-size:clamp(28px,8.5vw,40px)}
+.tile small{display:block;margin-top:3px;font-size:12.5px;color:var(--muted)}
+
+.debt{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:12px 14px 6px;margin-bottom:8px}
+.debt-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.debt-top b{font-weight:650;font-size:16px;min-width:0;overflow-wrap:anywhere}
+.debt-top span{font-family:var(--font-mono);font-size:15px;font-weight:500;white-space:nowrap}
+.debt small{display:block;margin-top:2px;font-size:13px;color:var(--muted)}
+.debt-acts{display:flex;flex-wrap:wrap;gap:0 16px;margin-top:2px}
+.debt-acts .link{padding:8px 0}
+
+.chart{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:12px 14px 8px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;margin-bottom:8px;font-size:12.5px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.sw-rec{background:var(--c-rec)}
+.sw-pend{background:var(--c-pend);background:repeating-linear-gradient(135deg,var(--c-pend) 0 4px,color-mix(in srgb,var(--c-pend) 50%,var(--surface)) 4px 7px)}
+.c-row{display:grid;grid-template-columns:32px minmax(0,1fr) 112px;gap:10px;align-items:center;min-height:38px;border-top:1px dotted var(--line)}
+.c-lab{font-size:12.5px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.c-row.now .c-lab{color:var(--ink)}
+.c-track{display:flex;gap:2px;height:14px;min-width:0}
+.c-seg{flex:0 1 auto;min-width:3px;height:100%;border-radius:0 4px 4px 0}
+.c-val{font-family:var(--font-mono);font-size:13px;text-align:right;white-space:nowrap;line-height:1.25}
+.c-val small{display:block;font-family:var(--font-body);font-size:11.5px;color:var(--muted)}
+
+.rank{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 2px;border-bottom:1px dotted var(--line);font-size:15px}
+.rank span:first-child{min-width:0;overflow-wrap:anywhere}
+.rank span:last-child{font-family:var(--font-mono);font-size:14px;white-space:nowrap}
+.rank small{color:var(--muted);font-size:12.5px;margin-left:8px;white-space:nowrap}
+.h-close{margin-top:0}
+.h-close select{flex:1 1 100%;max-width:none}
+.h-col .h-clinic{white-space:normal;overflow-wrap:anywhere;line-height:1.2}
+@media (min-width:720px){ .h-close select{flex:0 1 240px} }
+.h-close .btn{flex:1 1 auto}
+@media (min-width:720px){ .h-close .btn{flex:0 0 auto} }
 </style>
 </head>
 <body>
@@ -422,8 +489,10 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
     <nav class="tabs" aria-label="Seções">
       <a href="#ficha" data-tab="ficha">Ficha</a>
       <a href="#historico" data-tab="historico">Histórico <span id="tab-count"></span></a>
+      <a href="#resumo" data-tab="resumo">Resumo</a>
     </nav>
   </header>
+  <div id="install"></div>
 
   <div id="view-ficha">
     <div class="seg mode" role="group" aria-label="Modo da ficha">
@@ -432,10 +501,12 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
     </div>
     <div class="meta">
       <label for="clinic" class="full"><span id="l-place">Clínica</span>
-        <input class="f" id="clinic" type="text" data-f="clinic" placeholder="Onde foi o plantão" autocomplete="off">
+        <input class="f" id="clinic" type="text" data-f="clinic" list="dl-clinic" placeholder="Onde foi o plantão" autocomplete="off">
+        <datalist id="dl-clinic"></datalist>
       </label>
       <label for="turma" class="full" id="w-turma" hidden>Disciplina ou turma
-        <input class="f" id="turma" type="text" data-f="turma" placeholder="Ex.: Anestesiologia, 7º semestre" autocomplete="off">
+        <input class="f" id="turma" type="text" data-f="turma" list="dl-turma" placeholder="Ex.: Anestesiologia, 7º semestre" autocomplete="off">
+        <datalist id="dl-turma"></datalist>
       </label>
       <label for="date">Data
         <input class="f" id="date" type="date" data-f="date">
@@ -465,9 +536,10 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
         </fieldset>
         <button type="button" class="btn wide" data-act="save" id="save">Salvar no histórico</button>
         <div class="actions">
+          <button type="button" class="btn ghost" data-act="wa">Enviar no WhatsApp</button>
           <button type="button" class="btn ghost" data-act="copy">Copiar resumo</button>
-          <button type="button" class="btn ghost" data-act="reset" id="reset">Limpar</button>
         </div>
+        <button type="button" class="link quiet reset" data-act="reset" id="reset">Limpar ficha</button>
         <p class="msg" id="msg" role="status"></p>
         <div class="manual" id="manual" hidden>
           <p>Não deu para copiar sozinho. Selecione o texto abaixo e copie.</p>
@@ -478,6 +550,9 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
   </div>
 
   <div id="view-historico" class="hist" hidden>
+    <label class="h-search" id="h-search-wrap" hidden><span class="sr">Buscar no histórico</span>
+      <input class="f" id="h-search" type="search" placeholder="Buscar por local, turma ou serviço" autocomplete="off" enterkeyhint="search">
+    </label>
     <div id="hist"></div>
     <div class="manual" id="hmanual" hidden>
       <p>Não deu para copiar sozinho. Selecione o texto abaixo e copie.</p>
@@ -488,9 +563,20 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
       <button type="button" class="btn ghost" data-act="import">Restaurar cópia</button>
       <input type="file" id="import-file" accept=".json,application/json" hidden>
     </div>
+    <p class="h-backinfo" id="backinfo"></p>
     <p class="h-foot">O histórico fica guardado neste aparelho. Não precisa de internet nem de conta. Se você limpar os dados do navegador ou trocar de celular, os registros somem — por isso baixe a cópia de segurança de vez em quando e use “Restaurar cópia” para trazer de volta (ou passar para outro aparelho).</p>
   </div>
+
+  <div id="view-resumo" class="hist" hidden>
+    <div id="painel"></div>
+    <div class="manual" id="rmanual" hidden>
+      <p>Não deu para copiar sozinho. Selecione o texto abaixo e copie.</p>
+      <textarea id="rmanual-text" readonly aria-label="Cobrança"></textarea>
+    </div>
+  </div>
 </div>
+
+<div class="toast" id="toast" role="status" hidden><span></span><button type="button" class="link" data-act="undo">Desfazer</button></div>
 
 <div class="bar" id="bar">
   <div>
@@ -554,6 +640,11 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
     return new Date(+m[1], +m[2]-1, 1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
   }
   function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+  /* minúsculas e sem acento, para comparar e buscar */
+  function deacc(s){ s = String(s==null?'':s).toLowerCase().trim(); try{ s = s.normalize('NFD').replace(/[̀-ͯ]/g,''); }catch(e){} return s; }
+  function daysSince(iso){ var p = parts(iso); if(!p) return 0; var t = new Date(); t.setHours(0,0,0,0); return Math.round((t - new Date(p.y,p.m-1,p.d))/86400000); }
+  function opt(v){ return '<option value="'+esc(v)+'">'; }
+  function monthShort(key){ var m = /^(\d{4})-(\d{2})$/.exec(key); return m ? new Date(+m[1], +m[2]-1, 1).toLocaleDateString('pt-BR',{month:'short'}).replace('.','') : ''; }
   function row(desc,qty,cents){ return {id:uid(),desc:desc||'',qty:qty==null?1:num(qty),cents:Math.round(num(cents))}; }
   function sub(r){ return Math.round(num(r.qty)*num(r.cents)); }
   function catTotal(c){ return (c.rows||[]).reduce(function(a,r){return a+sub(r);},0); }
@@ -610,9 +701,28 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
 
   /* ---------- rascunho local (a ficha em andamento fica guardada no aparelho) ---------- */
   var saveTimer;
-  function save(){
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(function(){ try{ localStorage.setItem(KEY, JSON.stringify(app)); }catch(e){} }, 250);
+  function saveNow(){ clearTimeout(saveTimer); try{ localStorage.setItem(KEY, JSON.stringify(app)); }catch(e){} }
+  function save(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 250); }
+  /* fechar ou trocar de app logo depois de digitar não perde o que foi digitado */
+  window.addEventListener('pagehide', saveNow);
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'hidden'){ saveNow(); return; }
+    if (!app) return;
+    if (freshenDates()){ render(); save(); }
+    renderHist(); renderPainel();
+  });
+  function draftEmpty(d){
+    return sumCats(d.cats) === 0 && !d.cats.some(function(c){ return c.rows.some(function(r){ return String(r.desc||'').trim(); }); });
+  }
+  /* ficha vazia (ou de exemplo) aberta em outro dia: a data volta a ser a de hoje */
+  function freshenDates(){
+    var t = todayISO(), changed = false;
+    ['plantao','aula'].forEach(function(m){
+      var d = app.drafts[m];
+      if (d.editingId || d.date === t || d.dateSetOn === t) return;
+      if (d.example || draftEmpty(d)){ d.date = t; changed = true; }
+    });
+    return changed;
   }
   function load(){
     try{
@@ -631,7 +741,7 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
   function rowHTML(c,r){
     var u = unit(c), s = sub(r), m = catMeta(c);
     return '<div class="row" data-row="'+r.id+'" data-cat="'+c.id+'">'
-      + '<input class="f desc" id="d-'+r.id+'" data-f="desc" type="text" value="'+esc(r.desc)+'" placeholder="'+esc(m.ph)+'" aria-label="Descrição" autocomplete="off">'
+      + '<input class="f desc" id="d-'+r.id+'" data-f="desc" list="dl-'+c.id+'" type="text" value="'+esc(r.desc)+'" placeholder="'+esc(m.ph)+'" aria-label="Descrição" autocomplete="off">'
       + '<div class="qty" role="group" aria-label="'+u.qty+'">'
       +   '<button type="button" class="step" data-act="dec" aria-label="Diminuir">−</button>'
       +   '<input class="q" id="q-'+r.id+'" data-f="qty" type="text" inputmode="decimal" value="'+fmtQty(r.qty)+'" aria-label="'+u.qty+'" autocomplete="off">'
@@ -659,17 +769,10 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
     $('turma').value = state.turma;
     $('date').value = state.date;
     $('pro').value = app.pro;
+    $('dl-clinic').innerHTML = sug.places[app.mode].slice(0,30).map(opt).join('');
+    $('dl-turma').innerHTML = sug.turmas.slice(0,30).map(opt).join('');
 
-    var n = '';
-    if (state.editingId){
-      n = '<div class="notice"><p>Você está editando um registro já salvo. Ao salvar, ele é atualizado no histórico.</p>'
-        + '<div><button type="button" class="link" data-act="clear">Cancelar edição</button></div></div>';
-    } else if (state.example){
-      n = '<div class="notice"><p>Os valores abaixo são de exemplo. Troque pelos seus ou comece do zero.</p>'
-        + '<div><button type="button" class="link" data-act="clear">Começar do zero</button>'
-        + '<button type="button" class="link quiet" data-act="keep">Manter</button></div></div>';
-    }
-    $('notice').innerHTML = n;
+    lastNotice = null;
 
     $('sheet').innerHTML = state.cats.map(function(c){
       return '<section class="sec" data-tone="'+catMeta(c).tone+'" data-cat="'+c.id+'">'
@@ -680,7 +783,7 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
         + c.rows.map(function(r){ return rowHTML(c,r); }).join('')
         + '<div class="sec-foot"><button type="button" class="add" data-act="addrow">'+esc(catMeta(c).add)+'</button>'
         + (c.rows.length ? '' : '<button type="button" class="add del" data-act="rmcat">Remover este tipo</button>')
-        + '</div></section>';
+        + '</div><datalist id="dl-'+c.id+'">'+(sug.desc[catKey(c)]||[]).slice(0,30).map(function(x){ return opt(x.desc); }).join('')+'</datalist></section>';
     }).join('');
 
     document.querySelectorAll('[data-act="status"]').forEach(function(b){
@@ -730,6 +833,30 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
     document.querySelectorAll('[data-count]').forEach(function(el){ el.textContent = n + (n===1?' item':' itens'); });
     $('receipt').innerHTML = receiptHTML();
     $('manual').hidden = true;
+    renderNotice();
+  }
+
+  /* aviso acima da ficha: edição, exemplo ou "repetir a última ficha deste local" */
+  var lastNotice = null;
+  function lastOfPlace(){
+    var k = deacc(state.clinic); if (!k) return null;
+    for (var i = 0; i < hist.length; i++){ if (hist[i].kind === app.mode && deacc(hist[i].clinic) === k) return hist[i]; }
+    return null;
+  }
+  function renderNotice(){
+    var n = '', last;
+    if (state.editingId){
+      n = '<div class="notice"><p>Você está editando um registro já salvo. Ao salvar, ele é atualizado no histórico.</p>'
+        + '<div><button type="button" class="link" data-act="clear">Cancelar edição</button></div></div>';
+    } else if (state.example){
+      n = '<div class="notice"><p>Os valores abaixo são de exemplo. Troque pelos seus ou comece do zero.</p>'
+        + '<div><button type="button" class="link" data-act="clear">Começar do zero</button>'
+        + '<button type="button" class="link quiet" data-act="keep">Manter</button></div></div>';
+    } else if (draftEmpty(state) && (last = lastOfPlace())){
+      n = '<div class="notice"><p>Última ficha de <b>'+esc(last.clinic)+'</b>: '+esc(dateBR(last.date))+', '+brl(last.total)+'. Quer começar por ela?</p>'
+        + '<div><button type="button" class="link" data-act="uselast" data-v="'+esc(last.id)+'">Preencher igual</button></div></div>';
+    }
+    if (n !== lastNotice){ $('notice').innerHTML = n; lastNotice = n; }
   }
 
   function say(html, isErr){ var m = $('msg'); m.innerHTML = html||''; m.classList.toggle('err', !!isErr); }
@@ -811,16 +938,19 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
   }
 
   /* ---------- histórico (guardado no próprio aparelho, localStorage) ---------- */
-  var HKEY = 'livro-plantoes-historico-v1';
+  var HKEY = 'livro-plantoes-historico-v1', BKEY = 'livro-plantoes-backup-em', IKEY = 'livro-plantoes-instalar-ok';
   var hist = [];                  // registros salvos
   var histState = 'ready';        // ready | off
   var histErr = '';
-  var histInfo = '';             // aviso pós-restauração
+  var histInfo = '';              // aviso pós-restauração
   var histKind = 'todos';         // todos | plantao | aula
+  var histQuery = '';             // busca
   var monthLists = {};            // mês -> registros (as duas colunas juntas), para o fechamento
   var closeMonth = '';
+  var debts = {};                 // local -> {name, items, total} do que está a receber
   var openIds = {};
   var armedDel = null, armedDelTimer;
+  var sug = {places:{plantao:[],aula:[]}, turmas:[], desc:{}};   // sugestões tiradas do histórico
 
   function normEntry(x){
     x = x || {};
@@ -837,7 +967,7 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
       var raw = JSON.parse(localStorage.getItem(HKEY) || '[]');
       hist = (Array.isArray(raw) ? raw : []).map(normEntry).filter(function(x){ return x.kind === 'plantao' || x.kind === 'aula'; });
     }catch(e){ hist = []; }
-    sortHist(); histState = 'ready';
+    sortHist(); histState = 'ready'; buildSug();
   }
   /* grava a lista inteira; devolve true/false */
   function persistHist(list){
@@ -849,12 +979,76 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
       return false;
     }
   }
+  function afterHist(){ buildSug(); renderHist(); renderPainel(); }
+  /* troca a lista por outra, grava, e oferece "Desfazer" */
+  function commit(next, msg){
+    var prev = hist; histErr = '';
+    if (!persistHist(next)){ renderHist(); return false; }
+    hist = next; sortHist(); afterHist();
+    if (msg) toast(msg, function(){ if (persistHist(prev)){ hist = prev; afterHist(); } });
+    return true;
+  }
   /* outra aba aberta mexeu no histórico: recarrega */
-  window.addEventListener('storage', function(e){ if (e.key === HKEY){ loadHist(); renderHist(); } });
+  window.addEventListener('storage', function(e){ if (e.key === HKEY){ loadHist(); afterHist(); } });
+
+  /* ---------- sugestões: locais, turmas e descrições já usadas (com o último valor) ---------- */
+  function catKey(c){ return (c.color && c.color !== 'outros') ? c.color : 'n:'+deacc(c.name); }
+  function buildSug(){
+    sug = {places:{plantao:[],aula:[]}, turmas:[], desc:{}};
+    var seenP = {plantao:{},aula:{}}, seenT = {}, seenD = {};
+    hist.forEach(function(h){            // do mais novo para o mais antigo
+      var k = deacc(h.clinic);
+      if (k && !seenP[h.kind][k]){ seenP[h.kind][k] = 1; sug.places[h.kind].push(h.clinic); }
+      var t = deacc(h.turma);
+      if (t && !seenT[t]){ seenT[t] = 1; sug.turmas.push(h.turma); }
+      (h.cats||[]).forEach(function(c){
+        var ck = catKey(c);
+        (c.rows||[]).forEach(function(r){
+          var d = deacc(r.desc); if (!d) return;
+          var id = ck+'|'+d; if (seenD[id]) return; seenD[id] = 1;
+          (sug.desc[ck] = sug.desc[ck] || []).push({desc:str(r.desc), cents:Math.round(num(r.cents))});
+        });
+      });
+    });
+  }
+  function lookupDesc(c, text){
+    var k = deacc(text); if (!k) return null;
+    var list = sug.desc[catKey(c)] || [];
+    for (var i = 0; i < list.length; i++){ if (deacc(list[i].desc) === k) return list[i]; }
+    return null;
+  }
+
+  /* ---------- aviso com "Desfazer" ---------- */
+  var toastTimer, undoFn = null;
+  function hideToast(){ clearTimeout(toastTimer); $('toast').hidden = true; undoFn = null; }
+  function toast(msg, undo){
+    var t = $('toast');
+    t.firstElementChild.textContent = msg; undoFn = undo || null;
+    t.lastElementChild.hidden = !undo; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, undo ? 7000 : 3500);
+  }
+
+  /* ---------- enviar texto pelo WhatsApp (abre o app para escolher o contato) ---------- */
+  function sendWA(text){
+    var a = document.createElement('a');
+    a.href = 'https://wa.me/?text=' + encodeURIComponent(text);
+    a.target = '_blank'; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  function placeOf(h){ return h.clinic || 'Sem local informado'; }
+  function matches(h, q){
+    if (!q) return true;
+    var bits = [h.clinic, h.turma, MODES[h.kind].name];
+    (h.cats||[]).forEach(function(c){ bits.push(c.name); (c.rows||[]).forEach(function(r){ bits.push(r.desc); }); });
+    var hay = deacc(bits.join(' '));
+    return q.split(/\s+/).every(function(w){ return hay.indexOf(w) >= 0; });
+  }
 
   function itemHTML(h){
     var p = parts(h.date), open = !!openIds[h.id], got = h.status==='recebido';
     var meta = MODES[h.kind].name, n = countItems(h.cats), ha = h.kind==='aula' ? haOf(h.cats) : 0;
+    var late = got ? 0 : daysSince(h.date);
     if (h.kind==='aula'){ if (ha) meta += ' · '+fmtQty(ha)+' h/a'; if (h.turma) meta += ' · '+h.turma; }
     else meta += ' · '+n+(n===1?' item':' itens');
     var s = '<article class="h-item" data-id="'+esc(h.id)+'">'
@@ -862,8 +1056,9 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
       + '<span class="h-date"><b>'+(p?p.dd:'--')+'</b><small>'+(p?esc(weekday(p)):'')+'</small></span>'
       + '<span class="h-main"><span class="h-clinic">'+esc(h.clinic||MODES[h.kind].name)+'</span>'
       +   '<span class="h-meta">'+esc(meta)+'</span>'
-      +   '<span class="h-val">'+brl(h.total)+'</span></span>'
-      + '</button>';
+      +   '<span class="h-val">'+brl(h.total)+'</span>'
+      +   (late >= 30 ? '<span class="late">há '+late+' dias</span>' : '')
+      + '</span></button>';
     if (open){
       s += '<div class="h-body">'+(groupsHTML(h.cats) || '<div class="r-empty">Sem itens.</div>')
         + '<p class="h-when">'+(got ? 'Recebido'+(h.receivedOn?' em '+esc(dateBR(h.receivedOn)):'')+'.' : 'Ainda não recebido.')+'</p>'
@@ -901,20 +1096,36 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
     });
     months.forEach(function(k){
       var its = byM[k], ms = its.reduce(function(a,h){ return a + h.total; }, 0);
-      html += '<div class="h-month"><h2>'+esc(cap(monthName(k)))+'</h2><span>'+brl(ms)+'</span></div>'
+      html += '<div class="h-month"><h2 title="'+esc(cap(monthName(k)))+'">'+esc(monthShort(k) ? monthShort(k)+' '+k.slice(0,4) : 'Sem data')+'</h2><span>'+brl(ms)+'</span></div>'
         + its.map(itemHTML).join('');
     });
     return html + '</section>';
   }
 
+  /* cópia de segurança: quando foi a última, e se está na hora de fazer outra */
+  function lastBackup(){ try{ return localStorage.getItem(BKEY) || ''; }catch(e){ return ''; } }
+  function markBackup(){ try{ localStorage.setItem(BKEY, todayISO()); }catch(e){} renderHist(); }
+  function backupNote(){
+    if (hist.length < 5) return '';
+    var last = lastBackup();
+    if (!last) return 'Você já tem '+word(hist.length)+' e nenhuma cópia de segurança. Eles só existem neste aparelho.';
+    var d = daysSince(last);
+    return d >= 30 ? 'Sua última cópia de segurança foi há '+d+' dias.' : '';
+  }
+
   function renderHist(){
-    var el = $('hist');
+    var el = $('hist'), last = lastBackup();
     $('tab-count').textContent = (histState==='ready' && hist.length) ? String(hist.length) : '';
+    $('backinfo').textContent = last ? 'Última cópia de segurança: '+dateBR(last)+'.' : '';
+    var canSearch = histState==='ready' && hist.length >= 6;
+    $('h-search-wrap').hidden = !canSearch;
+    if (!canSearch && histQuery){ histQuery = ''; $('h-search').value = ''; }
     if (histState === 'off'){
       el.innerHTML = '<p class="h-note err">Este navegador não deixa guardar dados (talvez esteja em aba anônima). Abra a página numa aba normal para usar o histórico. A ficha continua calculando normalmente.</p>';
       return;
     }
-    var base = hist.filter(function(h){ return histKind==='todos' || h.kind===histKind; });
+    var q = deacc(histQuery);
+    var base = hist.filter(function(h){ return (histKind==='todos' || h.kind===histKind) && matches(h, q); });
     var got = base.filter(function(h){ return h.status==='recebido'; });
     var wait = base.filter(function(h){ return h.status!=='recebido'; });
     var haAll = 0, nAulas = 0;
@@ -927,8 +1138,16 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
       el.innerHTML = html + '<p class="h-note">Nada salvo ainda. Preencha uma ficha na aba Ficha e toque em Salvar no histórico.</p>';
       return;
     }
+    var bn = backupNote();
+    if (bn) html += '<p class="h-note warn"><span>'+esc(bn)+'</span><button type="button" class="link" data-act="export">Baixar agora</button></p>';
     html += segHTML('kind', histKind, [['todos','Tudo'],['plantao','Plantões'],['aula','Aulas']], 'Filtrar por tipo');
-    if (nAulas) html += '<p class="h-aulas">Aulas registradas: '+fmtQty(haAll)+' h/a em '+word(nAulas)+'.</p>';
+    if (q) html += '<p class="h-aulas">'+word(base.length)+' com “'+esc(histQuery.trim())+'”.</p>';
+    else if (nAulas) html += '<p class="h-aulas">Aulas registradas: '+fmtQty(haAll)+' h/a em '+word(nAulas)+'.</p>';
+
+    html += '<div class="h-cols">'
+      + colHTML('Já recebi', 'got', got)
+      + colHTML('A receber', '', wait)
+      + '</div>';
 
     /* fechamento do mês (junta recebidos e a receber) */
     monthLists = {}; var months = [];
@@ -939,16 +1158,130 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
     });
     if (months.length){
       if (!monthLists[closeMonth]) closeMonth = months[0];
-      html += '<div class="h-close"><select class="f" id="close-month" aria-label="Mês do fechamento">'
+      html += '<h2 class="h-sec">Fechamento do mês</h2>'
+        + '<div class="h-close"><select class="f" id="close-month" aria-label="Mês do fechamento">'
         + months.map(function(k){ return '<option value="'+esc(k)+'"'+(k===closeMonth?' selected':'')+'>'+esc(cap(monthName(k)))+'</option>'; }).join('')
-        + '</select><button type="button" class="btn ghost" data-act="copymonth">Copiar fechamento do mês</button></div>';
+        + '</select><button type="button" class="btn ghost" data-act="wamonth">Enviar no WhatsApp</button>'
+        + '<button type="button" class="btn ghost" data-act="copymonth">Copiar</button></div>';
+    }
+    el.innerHTML = html;
+  }
+
+  /* ---------- aba Resumo: quanto falta receber, de quem, e como andam os meses ---------- */
+  function agg(list){
+    var o = {rec:0, pend:0, n:0, ha:0};
+    list.forEach(function(h){
+      if (h.status==='recebido') o.rec += h.total; else o.pend += h.total;
+      o.n++; if (h.kind==='aula') o.ha += haOf(h.cats);
+    });
+    o.tot = o.rec + o.pend; return o;
+  }
+  function tileHTML(label, a){
+    return '<div class="tile"><span>'+esc(label)+'</span><strong>'+brl(a.tot)+'</strong>'
+      + '<small>'+word(a.n)+(a.ha ? ' · '+fmtQty(a.ha)+' h/a' : '')+'</small>'
+      + '<small>Recebido: '+brl(a.rec)+'</small></div>';
+  }
+  function debtText(d){
+    var out = ['*Valores em aberto · '+d.name+'*'];
+    if (app.pro.trim()) out.push(app.pro.trim());
+    out.push('');
+    d.items.slice().reverse().forEach(function(h){
+      out.push((dateBR(h.date) || '--') + ' · ' + MODES[h.kind].name + (h.turma ? ' · '+h.turma : '') + ' · ' + brl(h.total));
+    });
+    out.push('');
+    out.push('*Total em aberto: '+brl(d.total)+'*');
+    return out.join('\n');
+  }
+  function payAll(key){
+    var d = debts[key]; if (!d) return;
+    var ids = {}; d.items.forEach(function(h){ ids[h.id] = 1; });
+    var t = todayISO(), n = d.items.length;
+    commit(hist.map(function(h){
+      if (!ids[h.id]) return h;
+      var c = JSON.parse(JSON.stringify(h)); c.status = 'recebido'; c.receivedOn = t; return c;
+    }), n===1 ? 'Marcado como recebido.' : n+' registros marcados como recebidos.');
+  }
+
+  function renderPainel(){
+    var el = $('painel');
+    if (histState === 'off'){ el.innerHTML = '<p class="h-note err">Este navegador não deixa guardar dados, então não há o que resumir. Abra numa aba normal.</p>'; return; }
+    if (!hist.length){ el.innerHTML = '<p class="h-note">O resumo aparece aqui depois que você salvar a primeira ficha: quanto falta receber, de quem, e o total de cada mês.</p>'; return; }
+    var today = todayISO(), mk = today.slice(0,7), yk = today.slice(0,4);
+    var M = agg(hist.filter(function(h){ return h.date.slice(0,7) === mk; }));
+    var Y = agg(hist.filter(function(h){ return h.date.slice(0,4) === yk; }));
+    var ALL = agg(hist), nPend = hist.filter(function(h){ return h.status !== 'recebido'; }).length;
+
+    var html = '<div class="tiles">'
+      + '<div class="tile big'+(ALL.pend ? '' : ' zero')+'"><span>A receber</span><strong>'+brl(ALL.pend)+'</strong>'
+      +   '<small>'+(ALL.pend ? word(nPend)+' em aberto' : 'Tudo recebido. Ninguém está te devendo.')+'</small></div>'
+      + tileHTML(cap(monthName(mk)), M)
+      + tileHTML('Ano de '+yk, Y)
+      + '</div>';
+
+    /* quem me deve */
+    debts = {}; var order = [];
+    hist.forEach(function(h){
+      if (h.status === 'recebido') return;
+      var k = deacc(placeOf(h));
+      if (!debts[k]){ debts[k] = {name:placeOf(h), items:[], total:0}; order.push(k); }
+      debts[k].items.push(h); debts[k].total += h.total;
+    });
+    order.sort(function(a,b){ return debts[b].total - debts[a].total; });
+    if (order.length){
+      html += '<h2 class="h-sec">Quem me deve</h2>';
+      order.forEach(function(k){
+        var d = debts[k], old = d.items[d.items.length-1], days = daysSince(old.date), many = d.items.length > 1;
+        html += '<div class="debt"><div class="debt-top"><b>'+esc(d.name)+'</b><span>'+brl(d.total)+'</span></div>'
+          + '<small>'+word(d.items.length)+' · '+(many ? 'o mais antigo é de ' : 'de ')+esc(dateBR(old.date))
+          + (days >= 30 ? ' <span class="late">há '+days+' dias</span>' : '')+'</small>'
+          + '<div class="debt-acts">'
+          + '<button type="button" class="link" data-act="wadebt" data-v="'+esc(k)+'">Cobrar no WhatsApp</button>'
+          + '<button type="button" class="link" data-act="copydebt" data-v="'+esc(k)+'">Copiar cobrança</button>'
+          + '<button type="button" class="link quiet" data-act="payall" data-v="'+esc(k)+'">'+(many ? 'Recebi tudo' : 'Recebi')+'</button>'
+          + '</div></div>';
+      });
     }
 
-    html += '<div class="h-cols">'
-      + colHTML('Já recebi', 'got', got)
-      + colHTML('A receber', '', wait)
-      + '</div>';
+    /* últimos 6 meses: barras empilhadas (recebido + a receber), uma escala só */
+    var keys = [], y0 = +yk, m0 = +mk.slice(5) - 1, i;
+    for (i = 5; i >= 0; i--){ var dt = new Date(y0, m0 - i, 1); keys.push(dt.getFullYear()+'-'+('0'+(dt.getMonth()+1)).slice(-2)); }
+    var per = keys.map(function(k){ return agg(hist.filter(function(h){ return h.date.slice(0,7) === k; })); });
+    var max = Math.max.apply(null, per.map(function(a){ return a.tot; }));
+    if (max > 0){
+      var pct = function(v){ return (v/max*100).toFixed(2); };
+      html += '<h2 class="h-sec">Últimos 6 meses</h2><div class="chart">'
+        + '<div class="legend"><span><i class="sw-rec"></i>Recebido</span><span><i class="sw-pend"></i>A receber</span></div>';
+      keys.forEach(function(k, j){
+        var a = per[j];
+        html += '<div class="c-row'+(k===mk?' now':'')+'" title="'+esc(cap(monthName(k))+': recebido '+brl(a.rec)+', a receber '+brl(a.pend))+'">'
+          + '<span class="c-lab">'+esc(monthShort(k))+'</span>'
+          + '<span class="c-track">'
+          +   (a.rec ? '<span class="c-seg sw-rec" style="flex-basis:'+pct(a.rec)+'%"></span>' : '')
+          +   (a.pend ? '<span class="c-seg sw-pend" style="flex-basis:'+pct(a.pend)+'%"></span>' : '')
+          + '</span>'
+          + '<span class="c-val">'+(a.tot ? brl(a.tot) : '—')+(a.pend ? '<small>'+fmt(a.pend)+' a receber</small>' : '')+'</span></div>';
+      });
+      html += '</div>';
+    }
+
+    /* por local, no ano */
+    var byP = {}, pk = [];
+    hist.forEach(function(h){
+      if (h.date.slice(0,4) !== yk) return;
+      var k = deacc(placeOf(h));
+      if (!byP[k]){ byP[k] = {name:placeOf(h), n:0, tot:0}; pk.push(k); }
+      byP[k].n++; byP[k].tot += h.total;
+    });
+    pk.sort(function(a,b){ return byP[b].tot - byP[a].tot; });
+    if (pk.length > 1){
+      html += '<h2 class="h-sec">Por local em '+yk+'</h2>'
+        + pk.slice(0,6).map(function(k){
+            var x = byP[k];
+            return '<div class="rank"><span>'+esc(x.name)+'<small>'+word(x.n)+'</small></span><span>'+brl(x.tot)+'</span></div>';
+          }).join('');
+    }
     el.innerHTML = html;
+    $('rmanual').hidden = true;
   }
 
   function saveEntry(btn){
@@ -972,30 +1305,27 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
     histErr = '';
     if (!persistHist(next)){ say(histErr + ' Nada foi perdido da ficha.', true); histErr = ''; return; }
     hist = next; sortHist();
+    /* pede ao navegador para não apagar os dados sozinho */
+    try{ if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function(){}); }catch(e){}
     app.drafts[mode] = draft(mode,false);
-    if (app.mode === mode){ state = app.drafts[mode]; render(); }
-    save(); renderHist();
+    if (app.mode === mode) state = app.drafts[mode];
+    afterHist(); render(); saveNow();
     say((editing ? 'Alterações salvas.' : 'Salvo no histórico.') + ' <a href="#historico">Ver histórico</a>');
   }
 
   function setPaid(id, paid){
-    histErr = '';
-    var next = hist.map(function(h){
+    commit(hist.map(function(h){
       if (h.id !== id) return h;
       var c = JSON.parse(JSON.stringify(h));
       c.status = paid ? 'recebido' : 'pendente'; c.receivedOn = paid ? todayISO() : null;
       return c;
-    });
-    if (persistHist(next)) hist = next;
-    renderHist();
+    }), paid ? 'Movido para “Já recebi”.' : 'Voltou para “A receber”.');
   }
   function removeEntry(id){
-    histErr = '';
-    var next = hist.filter(function(h){ return h.id !== id; });
-    if (!persistHist(next)){ renderHist(); return; }
-    hist = next; delete openIds[id];
+    if (!commit(hist.filter(function(h){ return h.id !== id; }), 'Registro excluído.')) return;
+    delete openIds[id];
     ['plantao','aula'].forEach(function(m){ if (app.drafts[m].editingId === id) app.drafts[m].editingId = null; });
-    render(); save(); renderHist();
+    render(); save();
   }
 
   /* cópia de segurança */
@@ -1006,7 +1336,7 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
     try{
       var file = new File([blob], name, {type:'application/json'});
       if (navigator.canShare && navigator.canShare({files:[file]}) && navigator.share){
-        navigator.share({files:[file], title:'Cópia do Livro de Plantões'}).catch(function(){});
+        navigator.share({files:[file], title:'Cópia do Livro de Plantões'}).then(markBackup, function(){});
         return;
       }
     }catch(e){}
@@ -1015,6 +1345,7 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
     a.download = name;
     document.body.appendChild(a); a.click();
     setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    markBackup();
   }
   function importHist(file){
     var rd = new FileReader();
@@ -1029,9 +1360,13 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
         incoming.forEach(function(h){ if (!byId[h.id]) added++; byId[h.id] = h; });
         var next = Object.keys(byId).map(function(k){ return byId[k]; });
         histErr = '';
-        if (persistHist(next)){ hist = next; sortHist(); histErr = ''; histInfo = 'Cópia restaurada: '+word(incoming.length)+' lidos, '+added+' novos.'; }
+        if (persistHist(next)){
+          hist = next; sortHist();
+          histInfo = 'Cópia restaurada: '+incoming.length+(incoming.length===1 ? ' registro lido' : ' registros lidos')
+            + ', '+added+(added===1 ? ' novo' : ' novos')+'.';
+        }
       }catch(e){ histErr = 'Esse arquivo não é uma cópia de segurança válida do Livro de Plantões.'; }
-      renderHist();
+      afterHist(); render();
     };
     rd.onerror = function(){ histErr = 'Não deu para ler o arquivo.'; renderHist(); };
     rd.readAsText(file);
@@ -1043,22 +1378,45 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
     if (e.target && e.target.id === 'close-month') closeMonth = e.target.value;
   });
 
+  /* ---------- instalar como aplicativo ---------- */
+  var deferredPrompt = null;
+  function isStandalone(){ return navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches); }
+  function isIOS(){ return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+  function renderInstall(){
+    var el = $('install'), off = false;
+    try{ off = localStorage.getItem(IKEY) === '1'; }catch(e){}
+    if (isStandalone() || off || location.protocol === 'file:'){ el.innerHTML = ''; return; }
+    if (deferredPrompt){
+      el.innerHTML = '<div class="notice"><p>Instale o Livro de Plantões no aparelho: abre pelo ícone, em tela cheia, e funciona sem internet.</p>'
+        + '<div><button type="button" class="link" data-act="install">Instalar</button>'
+        + '<button type="button" class="link quiet" data-act="installno">Agora não</button></div></div>';
+    } else if (isIOS()){
+      el.innerHTML = '<div class="notice"><p>Para usar como aplicativo no iPhone: toque em <b>Compartilhar</b> (o quadrado com a seta) e depois em <b>Adicionar à Tela de Início</b>. Faça isso antes de salvar fichas, porque o app instalado guarda os dados separado do Safari.</p>'
+        + '<div><button type="button" class="link quiet" data-act="installno">Entendi</button></div></div>';
+    } else { el.innerHTML = ''; }
+  }
+  window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferredPrompt = e; renderInstall(); });
+  window.addEventListener('appinstalled', function(){ deferredPrompt = null; renderInstall(); });
+
+  function catsFrom(h){
+    return (h.cats||[]).map(function(c){
+      return {id:uid(), name:str(c.name), color:CAT[c.color]?c.color:'outros', unit:UNIT[c.unit]?c.unit:'un',
+        rows:(Array.isArray(c.rows)?c.rows:[]).map(function(r){ return row(str(r.desc), r.qty, r.cents); })};
+    });
+  }
   /* Abre um registro salvo na ficha: para editar (mesmo registro) ou repetir (novo, com a data de hoje). */
   function openEntry(id, asNew){
     var h = hist.filter(function(x){ return x.id === id; })[0]; if (!h) return;
     var cur = app.drafts[h.kind];
-    if (!cur.example && !cur.editingId && sumCats(cur.cats) > 0){
+    if (!cur.example && !cur.editingId && !draftEmpty(cur)){
       histErr = 'Há uma ficha de '+MODES[h.kind].name.toLowerCase()+' em andamento. Salve ou limpe essa ficha antes.';
-      renderHist(); return;
+      renderHist(); window.scrollTo(0,0); return;
     }
     histErr = '';
     app.mode = h.kind;
     app.drafts[h.kind] = {clinic:h.clinic, turma:h.turma, date:asNew ? todayISO() : (h.date || todayISO()), example:false,
       status:asNew ? 'pendente' : h.status, editingId:asNew ? null : id, receivedOn:asNew ? null : h.receivedOn,
-      cats:(h.cats||[]).map(function(c){
-        return {id:uid(), name:str(c.name), color:CAT[c.color]?c.color:'outros', unit:UNIT[c.unit]?c.unit:'un',
-          rows:(Array.isArray(c.rows)?c.rows:[]).map(function(r){ return row(str(r.desc), r.qty, r.cents); })};
-      })};
+      cats:catsFrom(h)};
     state = app.drafts[h.kind];
     render(); save(); say(''); renderHist();
     location.hash = 'ficha'; window.scrollTo(0,0);
@@ -1066,13 +1424,15 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
 
   /* ---------- abas ---------- */
   function route(){
-    var v = (location.hash||'').replace('#','') === 'historico' ? 'historico' : 'ficha';
+    var h = (location.hash||'').replace('#',''), v = (h === 'historico' || h === 'resumo') ? h : 'ficha';
     $('view-ficha').hidden = v !== 'ficha';
     $('view-historico').hidden = v !== 'historico';
+    $('view-resumo').hidden = v !== 'resumo';
     $('bar').hidden = v !== 'ficha';
     document.querySelectorAll('.tabs a').forEach(function(a){
       if (a.dataset.tab === v) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current');
     });
+    if (v === 'resumo') renderPainel();
   }
   window.addEventListener('hashchange', route);
 
@@ -1086,19 +1446,31 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
   }
 
   document.addEventListener('input', function(e){
-    var t = e.target, f = t.dataset && t.dataset.f; if(!f) return;
+    var t = e.target, f = t.dataset && t.dataset.f;
+    if (t.id === 'h-search'){ histQuery = t.value; renderHist(); return; }
+    if(!f) return;
     if (f==='clinic'){ state.clinic = t.value; }
     else if (f==='turma'){ state.turma = t.value; }
-    else if (f==='date'){ state.date = t.value; }
+    else if (f==='date'){ state.date = t.value; state.dateSetOn = todayISO(); }
     else if (f==='pro'){ app.pro = t.value; }
     else if (f==='cat'){ var c = findCat(t); if(c) c.name = t.value; }
     else {
       var hit = findRow(t); if(!hit) return;
-      if (f==='desc'){ hit.row.desc = t.value; }
+      if (f==='desc'){
+        hit.row.desc = t.value;
+        /* descrição já usada antes: traz o último valor cobrado */
+        if (!hit.row.cents || hit.row.auto){
+          var known = lookupDesc(hit.cat, t.value);
+          if (known && known.cents){
+            hit.row.cents = known.cents; hit.row.auto = true;
+            var vEl = $('v-'+hit.row.id); if (vEl) vEl.value = fmt(known.cents);
+          }
+        }
+      }
       else if (f==='qty'){ hit.row.qty = parseQty(t.value); }
       else if (f==='val'){
         var digits = t.value.replace(/\D/g,'').replace(/^0+/,'').slice(0,9);
-        hit.row.cents = digits ? parseInt(digits,10) : 0;
+        hit.row.cents = digits ? parseInt(digits,10) : 0; hit.row.auto = false;
         t.value = digits ? fmt(hit.row.cents) : '';
         try{ t.setSelectionRange(t.value.length, t.value.length); }catch(_){}
       }
@@ -1118,7 +1490,7 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
   });
 
   var armTimer;
-  function disarm(){ var b=$('reset'); clearTimeout(armTimer); b.classList.remove('armed'); b.textContent='Limpar'; }
+  function disarm(){ var b=$('reset'); clearTimeout(armTimer); b.classList.remove('armed'); b.textContent='Limpar ficha'; }
 
   document.addEventListener('click', function(e){
     var b = e.target.closest('[data-act]'); if(!b) return;
@@ -1129,14 +1501,38 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
     item = b.closest('.h-item'); id = item && item.dataset.id;
     if (act!=='del' && armedDel){ armedDel = null; clearTimeout(armedDelTimer); renderHist(); }
     if (act==='toggle'){ if (openIds[id]) delete openIds[id]; else openIds[id] = true; renderHist(); return; }
+    if (act==='undo'){ var uf = undoFn; hideToast(); if (uf) uf(); return; }
     if (act==='kind'){ histKind = b.dataset.v; renderHist(); return; }
-    if (act==='copymonth'){
+    if (act==='copymonth' || act==='wamonth'){
       var sel = $('close-month'), k = sel ? sel.value : closeMonth, items = monthLists[k]; if (!items) return;
       closeMonth = k;
-      copyText(monthText(k, items), b, 'hmanual'); return;
+      if (act==='wamonth') sendWA(monthText(k, items)); else copyText(monthText(k, items), b, 'hmanual');
+      return;
     }
     if (act==='export'){ exportHist(); return; }
     if (act==='import'){ $('import-file').click(); return; }
+    if (act==='wadebt' || act==='copydebt' || act==='payall'){
+      var dk = b.dataset.v, dd = debts[dk]; if (!dd) return;
+      if (act==='wadebt') sendWA(debtText(dd));
+      else if (act==='copydebt') copyText(debtText(dd), b, 'rmanual');
+      else payAll(dk);
+      return;
+    }
+    if (act==='install'){
+      if (deferredPrompt){ var dp = deferredPrompt; deferredPrompt = null; try{ dp.prompt(); }catch(_){} }
+      renderInstall(); return;
+    }
+    if (act==='installno'){ try{ localStorage.setItem(IKEY,'1'); }catch(_){} renderInstall(); return; }
+    if (act==='uselast'){
+      var h0 = hist.filter(function(x){ return x.id === b.dataset.v; })[0]; if (!h0) return;
+      state.cats = catsFrom(h0);
+      if (app.mode==='aula' && !state.turma.trim()) state.turma = h0.turma;
+      render(); save(); say(''); return;
+    }
+    if (act==='wa'){
+      if (!countItems(state.cats)){ say('Lance pelo menos um serviço antes de enviar.', true); return; }
+      sendWA(summaryText()); return;
+    }
     if (act==='pay'){ setPaid(id, true); return; }
     if (act==='unpay'){ setPaid(id, false); return; }
     if (act==='edit'){ openEntry(id, false); return; }
@@ -1200,13 +1596,14 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
 
   /* ---------- início ---------- */
   app = load() || freshApp();
+  freshenDates();
   state = app.drafts[app.mode];
   loadHist();
-  render(); route(); renderHist();
+  render(); route(); renderHist(); renderPainel(); renderInstall();
 })();
 </script>
 <script>
-if ('serviceWorker' in navigator && location.protocol === 'https:'){
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
   window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
 }
 </script>
