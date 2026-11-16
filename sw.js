@@ -1,7 +1,7 @@
 /* Modo offline do Livro de Plantões.
    Guarda o app no aparelho na primeira abertura. Depois disso ele abre sem internet.
    Os dados (fichas e histórico) NÃO passam por aqui: ficam no armazenamento do navegador. */
-var CACHE = 'livro-plantoes-v2';
+var CACHE = 'livro-plantoes-v3';
 var SHELL = ['./', 'index.html', 'manifest.webmanifest', 'archivo.woff2', 'dm-mono-400.woff2', 'dm-mono-500.woff2',
              'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
@@ -27,7 +27,8 @@ function pageFirstNet(req){
     var done = false;
     function finish(r){ if (!done && r){ done = true; resolve(r); } }
     var timer = setTimeout(function(){ cached(req).then(finish); }, 2500);
-    fetch(req).then(function(res){
+    /* no-cache: sempre confere com o servidor se a página mudou */
+    fetch(req.url, {cache:'no-cache', credentials:'same-origin'}).then(function(res){
       clearTimeout(timer);
       if (res && res.ok){ put(req, res); finish(res); }
       else cached(req).then(function(hit){ finish(hit || res); });
@@ -43,6 +44,7 @@ self.addEventListener('fetch', function(e){
   if (req.method !== 'GET') return;
   var url = new URL(req.url);
   if (url.origin !== location.origin) return;
+  if (/version\.txt$/.test(url.pathname)) return;   /* a checagem de versão vai sempre direto à rede */
   var isPage = req.mode === 'navigate' || /(\/|\.html|\.webmanifest|sw\.js)$/.test(url.pathname);
   if (isPage){ e.respondWith(pageFirstNet(req)); return; }
   /* fontes e ícones não mudam: usa o guardado e só busca se faltar */

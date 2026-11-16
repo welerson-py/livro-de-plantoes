@@ -1606,6 +1606,27 @@ input[type="date"]::-webkit-date-and-time-value{text-align:left}
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')){
   window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
 }
+/* Atualização automática: ao abrir ou voltar para o app, confere se saiu versão nova e recarrega sozinho.
+   Os dados ficam no aparelho e não são afetados. */
+(function(){
+  var BUILD = '3', busy = false, last = 0;
+  function check(){
+    if (busy || location.protocol === 'file:' || navigator.onLine === false || Date.now() - last < 60000) return;
+    busy = true; last = Date.now();
+    fetch('version.txt?t=' + Date.now(), {cache:'no-store'}).then(function(r){ return r.ok ? r.text() : ''; }).then(function(v){
+      busy = false; v = String(v || '').trim();
+      if (!v || v === BUILD) return;
+      var el = document.activeElement;
+      if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) { last = 0; return; }   /* não recarrega no meio da digitação */
+      try{ if (sessionStorage.getItem('lp-upd-' + v)) return; sessionStorage.setItem('lp-upd-' + v, '1'); }catch(e){}
+      window.dispatchEvent(new Event('pagehide'));   /* grava o rascunho antes */
+      location.reload();
+    }).catch(function(){ busy = false; });
+  }
+  window.addEventListener('load', check);
+  window.addEventListener('pageshow', function(e){ if (e.persisted) check(); });
+  document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') check(); });
+})();
 </script>
 </body>
 </html>
